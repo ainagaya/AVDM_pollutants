@@ -64,3 +64,4 @@ def get_yearly_average(df):
 if __name__ == "__main__":
     fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu")
     processed_data = fetcher.process_and_save_data("municipi='Barcelona'")
+    print(processed_data)
