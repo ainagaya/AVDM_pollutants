@@ -31,17 +31,26 @@ class DataFetcher:
         results = self.client.get(self.dataset_id, select=column_name, where=filter, limit=limit)
         return pd.DataFrame.from_records(results)[column_name].unique()
 
-def add_column_month(df):
-    df['month'] = pd.to_datetime(df['data']).dt.month
-    return df
+    def process_and_save_data(self, filter, output_file='filtered_data.csv'):
+        results_filtered = self.fetch_data_with_filter(filter)
+        results_filtered.fillna(0, inplace=True)
 
-def add_column_day(df):
-    df['day'] = pd.to_datetime(df['data']).dt.day
-    return df
+        new_table = pd.DataFrame(columns=results_filtered.columns)
+        new_table = new_table.loc[:, ~new_table.columns.str.startswith('h')]
 
-def add_column_year(df):
-    df['year'] = pd.to_datetime(df['data']).dt.year
-    return df
+        melted_df = results_filtered.melt(id_vars=['data', 'nom_estacio', 'contaminant'], 
+                                          value_vars=[f'h{i:02d}' for i in range(1, 25)], 
+                                          var_name='hour', value_name='value')
+        melted_df['hour'] = melted_df['hour'].str.extract('(\d+)').astype(int) - 1
+        melted_df['data'] = pd.to_datetime(melted_df['data'])
+        melted_df['data'] = melted_df.apply(lambda row: row['data'].replace(hour=row['hour']), axis=1)
+        new_table = melted_df.drop(columns=['hour'])
+
+        new_table = new_table.sort_values(by='data')
+
+        new_table.to_csv(output_file, index=False)
+        print(f"Data saved to {output_file}")
+        return new_table
 
 def get_monthly_average(df):
     return df.groupby('month').mean()
@@ -54,28 +63,4 @@ def get_yearly_average(df):
 
 if __name__ == "__main__":
     fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu")
-    results_filtered = fetcher.fetch_data_with_filter("municipi='Barcelona'")
-    results_filtered.fillna(0, inplace=True)
-
-    print(results_filtered)
-    new_table = pd.DataFrame(columns=results_filtered.columns)
-    new_table = new_table.loc[:, ~new_table.columns.str.startswith('h')]
-    print(new_table)
-
-    index = 0
-    date_format = '%Y-%m-%dT%H:%M:%S.%f'
-    date_format_time = '%H:%M:%S'
-
-    melted_df = results_filtered.melt(id_vars=['data', 'nom_estacio', 'contaminant'], 
-                                      value_vars=[f'h{i:02d}' for i in range(1, 25)], 
-                                      var_name='hour', value_name='value')
-    melted_df['hour'] = melted_df['hour'].str.extract('(\d+)').astype(int) - 1
-    melted_df['data'] = pd.to_datetime(melted_df['data'])
-    melted_df['data'] = melted_df.apply(lambda row: row['data'].replace(hour=row['hour']), axis=1)
-    new_table = melted_df.drop(columns=['hour'])
-
-    print(new_table['data'])
-
-    new_table = new_table.sort_values(by='data')
-
-    new_table.to_csv('filtered_data.csv', index=False)
+    processed_data = fetcher.process_and_save_data("municipi='Barcelona'")
