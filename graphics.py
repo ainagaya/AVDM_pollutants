@@ -25,10 +25,9 @@ if __name__ == "__main__":
     fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu")
     processed_data = fetcher.process_and_save_data("municipi='Barcelona'")
 
-    resampled = accumulate_data(processed_data, 'Barcelona (Parc Vall Hebron)', 'CO', 'M')
+    resampled = accumulate_data(processed_data, 'Barcelona (Parc Vall Hebron)', 'CO', 'D')
     #resampled_daily = resampled.groupby(resampled.index.date).sum()
     plot_timeseries(resampled, "Daily CO Levels in Barcelona (Parc Vall Hebron)", "CO Levels")
 
-    print(resampled)
     
     

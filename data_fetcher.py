@@ -19,17 +19,24 @@ class DataFetcher:
         results = self.client.get(self.dataset_id, limit=self.limit)
         return pd.DataFrame.from_records(results)
     
-    def fetch_data_with_filter(self, filter, limit=2000):
-        results = self.client.get(self.dataset_id, where=filter, limit=limit)
+    def fetch_data_with_filter(self, filter):
+        results = self.client.get(self.dataset_id, where=filter, limit=self.limit)
         return pd.DataFrame.from_records(results)
     
-    def list_available_options(self, column_name, limit=2000):
-        results = self.client.get(self.dataset_id, select=column_name, limit=limit)
+    def list_available_options(self, column_name):
+        results = self.client.get(self.dataset_id, select=column_name, limit=self.limit)
         return pd.DataFrame.from_records(results)[column_name].unique()
     
-    def list_available_options_with_filter(self, column_name, filter, limit=2000):
-        results = self.client.get(self.dataset_id, select=column_name, where=filter, limit=limit)
+    def list_available_options_with_filter(self, column_name, filter):
+        results = self.client.get(self.dataset_id, select=column_name, where=filter, limit=self.limit)
         return pd.DataFrame.from_records(results)[column_name].unique()
+    
+    def get_coordinates(self, station):
+    # Escape single quotes in the station name
+        safe_station = station.replace("'", "''")
+        results = self.client.get(self.dataset_id, where=f"nom_estacio='{safe_station}'", limit=1)
+        return pd.DataFrame.from_records(results)[['nom_estacio', 'latitud', 'longitud']]
+
 
     def process_and_save_data(self, filter, output_file='filtered_data.csv'):
         results_filtered = self.fetch_data_with_filter(filter)
