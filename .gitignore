@@ -1,2 +1,5 @@
 *.png
 *.csv
+shp_cat/
+.ipnyb_checkpoints/
+__pycache__/
