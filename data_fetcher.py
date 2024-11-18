@@ -59,14 +59,6 @@ class DataFetcher:
         print(f"Data saved to {output_file}")
         return new_table
 
-def get_monthly_average(df):
-    return df.groupby('month').mean()
-
-def get_daily_average(df):
-    return df.groupby('day').mean()
-
-def get_yearly_average(df):
-    return df.groupby('year').mean()
 
 if __name__ == "__main__":
     fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu")
