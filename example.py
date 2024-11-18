@@ -15,7 +15,7 @@ fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq
 #nom_estacio
 #data
 #magnitud (Codi numèric que identifica el contaminant)
-#contaminant ('PM10' 'NO' 'PM2.5' 'NOX' 'O3' 'SO2' 'NO2' 'CO')
+#contaminant ('PM10' 'NO' 'PM2.5' 'NOX' 'O3' 'SO2' 'NO2' 'CO') #cars:NO2, CO, PM2.5
 #unitats
 #tipus_estacio
 #area_urbana
@@ -34,10 +34,14 @@ fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq
 # dfc= fetcher.fetch_data_with_filter("municipi='Barcelona'")
 # print(table_contaminants.head)
 # print(dfc.loc[:,'h01'])
-# table_contaminants['h_average'] = np.average()
+
+# which contaminants are detected by each sector?
+available_stations = fetcher.list_available_options_with_filter("nom_estacio", "municipi='Barcelona'")
+for station in available_stations:
+    available_contaminant = fetcher.list_available_options_with_filter("contaminant", "nom_estacio='%s'"%station)
+    print(station, available_contaminant, len(available_contaminant))
 dfc = fetcher.process_and_save_data("municipi='Barcelona'")
-print(dfc)
+# print(dfc.head)
 # dfc['contaminant'].value_counts().plot.pie()
 dfc['nom_estacio'].value_counts().plot.pie()
 plt.show()
-# print(dfc['nom_estacio'])
