@@ -16,29 +16,47 @@ class DataFetcher:
         self.limit = limit
 
     def fetch_data(self):
+        """
+        Fetches data from the dataset and returns it as a pandas DataFrame
+        """
         results = self.client.get(self.dataset_id, limit=self.limit)
         return pd.DataFrame.from_records(results)
     
     def fetch_data_with_filter(self, filter):
+        """
+        Fetches data from the dataset with a filter and returns it as a pandas DataFrame
+        """
         results = self.client.get(self.dataset_id, where=filter, limit=self.limit)
         return pd.DataFrame.from_records(results)
     
     def list_available_options(self, column_name):
+        """
+        Lists the available options for a given column in the dataset
+        """
         results = self.client.get(self.dataset_id, select=column_name, limit=self.limit)
         return pd.DataFrame.from_records(results)[column_name].unique()
     
     def list_available_options_with_filter(self, column_name, filter):
+        """
+        Lists the available options for a given column in the dataset with a filter
+        """
         results = self.client.get(self.dataset_id, select=column_name, where=filter, limit=self.limit)
         return pd.DataFrame.from_records(results)[column_name].unique()
     
     def get_coordinates(self, station):
-    # Escape single quotes in the station name
+        """
+        Returns the coordinates of a station
+        """
+        # Escape single quotes in the station name
         safe_station = station.replace("'", "''")
         results = self.client.get(self.dataset_id, where=f"nom_estacio='{safe_station}'", limit=1)
         return pd.DataFrame.from_records(results)[['nom_estacio', 'latitud', 'longitud']]
 
 
     def process_and_save_data(self, filter, output_file='filtered_data.csv'):
+        """
+        Fetches data from the dataset with a filter, processes it and saves it to a CSV file
+        """
         results_filtered = self.fetch_data_with_filter(filter)
         results_filtered.fillna(0, inplace=True)
 
