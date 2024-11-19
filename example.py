@@ -1,5 +1,5 @@
 
-from data_fetcher import DataFetcher
+from data_fetcher.data_fetcher import DataFetcher
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

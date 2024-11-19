@@ -77,6 +77,29 @@ class DataFetcher:
         print(f"Data saved to {output_file}")
         return new_table
 
+    def process_and_save_data_no_filter(self, output_file='filtered_data.csv'):
+        """
+        Fetches data from the dataset without a filter, processes it and saves it to a CSV file
+        """
+        results_filtered = self.fetch_data()
+        results_filtered.fillna(0, inplace=True)
+
+        new_table = pd.DataFrame(columns=results_filtered.columns)
+        new_table = new_table.loc[:, ~new_table.columns.str.startswith('h')]
+
+        melted_df = results_filtered.melt(id_vars=['data', 'nom_estacio', 'contaminant'], 
+                                          value_vars=[f'h{i:02d}' for i in range(1, 25)], 
+                                          var_name='hour', value_name='value')
+        melted_df['hour'] = melted_df['hour'].str.extract('(\d+)').astype(int) - 1
+        melted_df['data'] = pd.to_datetime(melted_df['data'])
+        melted_df['data'] = melted_df.apply(lambda row: row['data'].replace(hour=row['hour']), axis=1)
+        new_table = melted_df.drop(columns=['hour'])
+
+        new_table = new_table.sort_values(by='data')
+
+        new_table.to_csv(output_file, index=False)
+        print(f"Data saved to {output_file}")
+        return new_table
 
 if __name__ == "__main__":
     fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu")
