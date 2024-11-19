@@ -3,6 +3,7 @@ from data_fetcher import DataFetcher
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
 
 fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=3000)
 #results_df = fetcher.fetch_data()
@@ -37,17 +38,17 @@ fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq
 # print(dfc.loc[:,'h01'])
 
 # which contaminants are detected by each sector?
-available_stations = fetcher.list_available_options_with_filter("nom_estacio", "municipi='Barcelona'")
-for station in available_stations:
-    available_contaminant = fetcher.list_available_options_with_filter("contaminant", "nom_estacio='%s'"%station)
-    print(station, available_contaminant, len(available_contaminant))
-dfc = fetcher.process_and_save_data("municipi='Barcelona'")
-print(len(dfc))
-plt.figure('contaminants')
-dfc['contaminant'].value_counts().plot.pie()
-plt.figure('nom_estacio')
-dfc['nom_estacio'].value_counts().plot.pie()
-plt.show()
+# available_stations = fetcher.list_available_options_with_filter("nom_estacio", "municipi='Barcelona'")
+# for station in available_stations:
+#     available_contaminant = fetcher.list_available_options_with_filter("contaminant", "nom_estacio='%s'"%station)
+#     print(station, available_contaminant, len(available_contaminant))
+# dfc = fetcher.process_and_save_data("municipi='Barcelona'")
+# print(len(dfc))
+# plt.figure('contaminants')
+# dfc['contaminant'].value_counts().plot.pie()
+# plt.figure('nom_estacio')
+# dfc['nom_estacio'].value_counts().plot.pie()
+# plt.show()
 
 # antiguetat dels vehicles
 antiguetat2020 = pd.read_csv('2020_antiguitat_tipus_vehicle.csv')
@@ -59,8 +60,18 @@ print(len(antiguetat2020v3))
 val_anti = antiguetat2020v3.Antiguitat.unique()
 print(val_anti)
 # get the total value in Barcelona for each kind of antiquety
-results = np.ones((len(val_anti),3))*antiguetat2020v3[1,'Any']
+years = np.ones((len(val_anti),1))*antiguetat2020v3.loc[1,'Any']
+df_result= pd.DataFrame(years, columns=['Any'])
+antique_list = []
+num_cars_list = []
 for i in range(len(val_anti)):
     df_antique = antiguetat2020v3[antiguetat2020v3.Antiguitat == val_anti[i]]
-    results[i,1:2] = [val_anti[i],df_antique.sum()]
-print(results)
+    antique_list.append(val_anti[i])
+    num_cars_list.append(df_antique.sum(axis='rows', numeric_only = True)['Nombre'])
+df_result['Antiguetat'] = antique_list
+df_result['Nombre'] = num_cars_list
+print(df_result)
+
+# df = px.data.gapminder().query("year == 2007").query("continent == 'Europe'")
+fig = px.pie(df_result, values='Nombre', names='Antiguetat', title='Age of the vehicle (tourism)')
+fig.show()
