@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-from data_fetcher import DataFetcher
+from data_fetcher.data_fetcher import DataFetcher
 import pandas as pd
 
 def plot_timeseries(data, title, ylabel, xlabel='Date', figsize=(10, 6)):

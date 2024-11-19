@@ -1,4 +1,4 @@
-from data_fetcher import DataFetcher
+from data_fetcher.data_fetcher import DataFetcher
 from graphics import accumulate_data
 from graphics import plot_timeseries
 import pandas as pd
