@@ -28,4 +28,4 @@ After cloning the repository, create a virtual environment and execute `pip inst
 - Joan Hernàndez Tey @JoanHTey
 - Aina Gaya @ainagaya
 - Diogo Correia @DiogoCorreia22
-- Gonçalo Seoane @goncaloseoane 
+- Gonçalo Seoane @goncaloseoane
