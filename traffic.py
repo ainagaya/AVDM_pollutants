@@ -35,7 +35,7 @@ data=mice_csv.drop(columns=['estatPrevist'])
 # Changing the date to a format that pandas can read
 data['data']=pd.to_datetime(data['data'],format='%Y%m%d%H%M%S')
 
-# Do a sum by day
+# Do a sum by day or hour
 data2=data.loc[data.index.isin(indexe)].resample('D', on='data').sum()
 
 # things to try to do for Hours
