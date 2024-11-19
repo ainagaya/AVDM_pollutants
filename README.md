@@ -25,5 +25,5 @@ After cloning the repository, create a virtual environment and execute `pip inst
 ## Authors
 
 - Armando Aguilar Campos @armandoaguilarcampos
-- @JoanHTey
+- Joan Hernàndez Tey @JoanHTey
 - Aina Gaya @ainagaya
