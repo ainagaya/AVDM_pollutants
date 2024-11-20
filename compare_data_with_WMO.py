@@ -1,7 +1,7 @@
 from ruamel.yaml import YAML
 
 from data_fetcher.data_fetcher import DataFetcher
-from graphics import plot_timeseries, accumulate_data
+from data_fetcher.graphics import plot_timeseries, accumulate_data
 
 
 import pandas as pd
