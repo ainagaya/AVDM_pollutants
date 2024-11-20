@@ -1,11 +1,11 @@
 
-from data_fetcher.data_fetcher import DataFetcher
+# from data_fetcher import DataFetcher
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
 
-fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=3000)
+# fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=3000)
 #results_df = fetcher.fetch_data()
 #results_filtered = fetcher.fetch_data_with_filter("municipi='Barcelona'")
 # available_stations = fetcher.list_available_options_with_filter("nom_estacio", "municipi='Barcelona'")
@@ -71,7 +71,3 @@ for i in range(len(val_anti)):
 df_result['Antiguetat'] = antique_list
 df_result['Nombre'] = num_cars_list
 print(df_result)
-
-# df = px.data.gapminder().query("year == 2007").query("continent == 'Europe'")
-fig = px.pie(df_result, values='Nombre', names='Antiguetat', title='Age of the vehicle (tourism)')
-fig.show()
