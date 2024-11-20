@@ -22,6 +22,13 @@ class DataFetcher:
         results = self.client.get(self.dataset_id, limit=self.limit)
         return pd.DataFrame.from_records(results)
     
+    def fetch_data_starting_from(self, start_date):
+        """
+        Fetches data from the dataset starting from a given date and returns it as a pandas DataFrame
+        """
+        results = self.client.get(self.dataset_id, where=f"data > '{start_date}'", limit=self.limit)
+        return pd.DataFrame.from_records(results)
+    
     def fetch_data_with_filter(self, filter):
         """
         Fetches data from the dataset with a filter and returns it as a pandas DataFrame
@@ -47,8 +54,12 @@ class DataFetcher:
         """
         Returns the coordinates of a station
         """
+        # remove nan instances
+        if type(station) != str:
+            return pd.DataFrame({})
         # Escape single quotes in the station name
         safe_station = station.replace("'", "''")
+        
         results = self.client.get(self.dataset_id, where=f"nom_estacio='{safe_station}'", limit=1)
         return pd.DataFrame.from_records(results)[['nom_estacio', 'latitud', 'longitud']]
 
@@ -100,6 +111,38 @@ class DataFetcher:
         new_table.to_csv(output_file, index=False)
         print(f"Data saved to {output_file}")
         return new_table
+
+    def fetch_and_process_data(self, municipality, year, month):
+        processed_data = self.process_and_save_data(f"municipi='{municipality}'")
+        processed_data['data'] = pd.to_datetime(processed_data['data'])
+        if month == 'all':
+            print(f"Data for {municipality} in {year} fetched and processed")
+            return processed_data[processed_data['data'].dt.year == year]
+        else:
+            print(f"Data for {municipality} in {month}/{year} fetched and processed")
+            return processed_data[(processed_data['data'].dt.year == year) & (processed_data['data'].dt.month == month)]
+        
+    def fetch_and_process_data_no_filter(self, year, month):
+        processed_data = self.process_and_save_data_no_filter()
+        processed_data['data'] = pd.to_datetime(processed_data['data'])
+        if month == 'all':
+            print(f"Data for all municipalities in {year} fetched and processed")
+            return processed_data[processed_data['data'].dt.year == year]
+        else:
+            print(f"Data for all municipalities in {month}/{year} fetched and processed")
+            return processed_data[(processed_data['data'].dt.year == year) & (processed_data['data'].dt.month == month)]
+
+        
+    def get_station_coordinates(self, filter="None"):
+        if filter == "None":
+            stations = self.list_available_options("nom_estacio")
+        else:
+            stations = self.list_available_options_with_filter("nom_estacio", filter)
+        print("stations: ", stations)
+        station_coordinates = pd.DataFrame({})
+        for estacio in stations:
+            station_coordinates = pd.concat([station_coordinates, self.get_coordinates(estacio)], ignore_index=True)
+        return station_coordinates
 
 if __name__ == "__main__":
     fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu")
