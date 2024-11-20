@@ -1,65 +1,58 @@
-
-from ruamel.yaml import YAML
-
-import plotly.express as px
-
 import os
-
-from data_fetcher.data_fetcher import DataFetcher
 import pandas as pd
+import plotly.express as px
+from ruamel.yaml import YAML
+from data_fetcher.data_fetcher import DataFetcher
 
-yaml = YAML(typ='safe')  # 'safe' is fine for loading
+def load_yaml(file_path):
+    yaml = YAML(typ='safe')
+    with open(file_path, 'r') as file:
+        return yaml.load(file)
 
-# Open the file and pass it to yaml.load()
-with open('WMO.yaml', 'r') as file:
-    data = yaml.load(file)
+def fetch_and_process_data(fetcher, municipality, year, month):
+    processed_data = fetcher.process_and_save_data(f"municipi='{municipality}'")
+    processed_data['data'] = pd.to_datetime(processed_data['data'])
+    return processed_data[(processed_data['data'].dt.year == year) & (processed_data['data'].dt.month == month)]
 
-print(data)
+def initialize_accumulator(stations, pollutants):
+    return pd.DataFrame(0, index=stations, columns=pollutants)
 
-fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu", limit=100000)
-processed_data = fetcher.process_and_save_data("municipi='Barcelona'")
+def update_accumulator(accumulator, processed_data, stations, pollutants, thresholds):
+    for station in stations:
+        for contaminant in pollutants:
+            station_data = processed_data[(processed_data['nom_estacio'] == station) & (processed_data['contaminant'] == contaminant)]
+            if not station_data.empty:
+                if contaminant in thresholds:
+                    if station_data['value'].astype(float).quantile(q=0.99) > int(thresholds[contaminant]):
+                        count_above_threshold = (station_data['value'].astype(float) > int(thresholds[contaminant])).sum()
+                        accumulator.at[station, contaminant] = count_above_threshold
+            else:
+                accumulator.at[station, contaminant] = 'NaN'
+    return accumulator
 
-last_data = processed_data.head(1)
-print("last data: ", last_data)
+def plot_heatmap(accumulator, title):
+    fig = px.imshow(accumulator)
+    fig.update_layout(title=title)
+    fig.show()
 
-# Filter data for October 2024
-processed_data['data'] = pd.to_datetime(processed_data['data'])
-october_2024_data = processed_data[(processed_data['data'].dt.year == 2024) & (processed_data['data'].dt.month == 10)]
-processed_data = october_2024_data
+def main():
+    yaml_file_path = 'WMO.yaml'
+    thresholds = load_yaml(yaml_file_path)
+    
+    fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu", limit=2000)
+    municipality = 'Barcelona'
+    year = 2024
+    month = 10
+    
+    processed_data = fetch_and_process_data(fetcher, municipality, year, month)
+    
+    stations = fetcher.list_available_options_with_filter("nom_estacio", f"municipi='{municipality}'")
+    pollutants = thresholds.keys()
+    
+    accumulator = initialize_accumulator(stations, pollutants)
+    accumulator = update_accumulator(accumulator, processed_data, stations, pollutants, thresholds)
+    
+    plot_heatmap(accumulator, f'Pollutant Threshold Exceedances in {municipality} Stations for {month}/{year}')
 
-#processed_data = fetcher.process_and_save_data_no_filter()
-
-stations = fetcher.list_available_options_with_filter("nom_estacio", "municipi='Barcelona'")
-pollutants = fetcher.list_available_options_with_filter("contaminant", "municipi='Barcelona'")
-
-#stations = fetcher.list_available_options("nom_estacio")
-#pollutants = fetcher.list_available_options("contaminant")
-
-pollutants = data.keys()
-
-accumulator = {station: 0 for station in stations}
-accumulator = pd.DataFrame(0, index=stations, columns=pollutants)
-
-print(accumulator)
-
-#print(processed_data)
-
-for station in stations:
-    for contaminant in pollutants:
-        if not processed_data[(processed_data['nom_estacio'] == station) & (processed_data['contaminant'] == contaminant)].empty:
-            if contaminant in data:
-                print("CONTAMINANT: ", contaminant)
-                if processed_data[(processed_data['nom_estacio'] == station) & (processed_data['contaminant'] == contaminant)]['value'].astype(float).quantile(q=0.99) > int(data[contaminant]):
-                    count_above_threshold = (processed_data[(processed_data['nom_estacio'] == station) & (processed_data['contaminant'] == contaminant)]['value'].astype(float) > int(data[contaminant])).sum()
-                    accumulator.at[station, contaminant] = count_above_threshold
-                #if processed_data[(processed_data['nom_estacio'] == station) & (processed_data['contaminant'] == contaminant)]['value'].astype(float) > int(data[contaminant]):
-                    print("THRESHOLE EXCEEDED FOR: ", contaminant, " IN STATION: ", station)
-        else:
-            print(f"Station {station} does not have data for {contaminant}")
-            accumulator.at[station, contaminant] = 'NaN'
-
-fig = px.imshow(accumulator)
-
-fig.update_layout(title='Pollutant Threshold Exceedances in Barcelona Stations for October 2024')
-
-fig.show()
+if __name__ == "__main__":
+    main()
