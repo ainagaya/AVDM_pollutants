@@ -73,10 +73,10 @@ for i in np.arange(19,24):
     df_list.append(num_vehi_by_age('num_vehicles_by_age/20%i_antiguitat_tipus_vehicle.csv'%i))
 year_age = pd.concat(df_list)
 
-fig, axs = plt.subplots()
-for i in range(1,len(year_age.columns)):
-    year_age.plot(kind='line',x = 'Any', y = year_age.columns[i], label=str(year_age.columns[i]), ax=axs)
-plt.legend()
+# fig, axs = plt.subplots()
+# for i in range(1,len(year_age.columns)):
+#     year_age.plot(kind='line',x = 'Any', y = year_age.columns[i], label=str(year_age.columns[i]), ax=axs)
+# plt.legend()
 print(year_age.head(3))
 
 # plot d '11 a 20 anys versus no2,co,pm2.5 in interval 2019-2023
@@ -88,11 +88,22 @@ print(year_age.head(3))
 # Barcelona (Poblenou) ['NOX' 'NO2' 'PM10' 'NO'] 4
 # Barcelona (Gràcia - Sant Gervasi) ['NO' 'O3' 'NO2' 'SO2' 'NOX' 'PM10' 'CO'] 7
 # Barcelona (Sants) ['NO' 'NO2' 'NOX'] 3
-fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=1000)
-processed_data = fetcher.process_and_save_data("municipi='Barcelona'")
-#station = 'Barcelona (Observatori Fabra)'
-resampled = accumulate_data(processed_data, 'Barcelona (Parc Vall Hebron)', 'CO', 'D')
-#resampled = accumulate_data(processed_data, station, 'CO', 'D')
-#resampled_daily = resampled.groupby(resampled.index.date).sum()
-plot_timeseries(resampled, "Daily CO Levels in Barcelona (Parc Vall Hebron)", "CO Levels")
+fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=200000)
+
+# processed_data = fetcher.process_and_save_data("municipi='Barcelona'")
+# processed_data = fetcher.fetch_with_filter_and_data_and_process('2019-01-01T00:00:00.000',"municipi='Barcelona'")
+processed_data = pd.read_csv('filtered_data_from.csv')
+processed_data['data'] = pd.to_datetime(processed_data['data'])
+car_pollu = ['NO2','CO','PM2.5']
+fig, ax = plt.subplots()
+for p in car_pollu:
+    resampled = accumulate_data(processed_data,'Barcelona (Palau Reial)', p, 'D')
+    resampled.plot(ax=ax)
+ax.set_title('proba')
+ax.set_xlabel('Date')
+ax.set_ylabel('pollutants (ug/m^3)')
+ax.legend(car_pollu)
+plt.show()
+
+
 

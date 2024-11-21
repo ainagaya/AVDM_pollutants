@@ -28,6 +28,32 @@ class DataFetcher:
         """
         results = self.client.get(self.dataset_id, where=f"data > '{start_date}'", limit=self.limit)
         return pd.DataFrame.from_records(results)
+
+    def fetch_with_filter_and_data_and_process(self, start_date, filter,output_file='filtered_data_from.csv'):
+        """
+        Fetches data from the dataset starting from a given filter and filter again with date and returns it as a pandas DataFrame
+        """
+        results = self.client.get(self.dataset_id, where=filter, limit=self.limit)
+        results_filtered = pd.DataFrame.from_records(results)
+        results_filtered = results_filtered[results_filtered.data > start_date]
+        results_filtered.fillna(0, inplace=True)
+
+        new_table = pd.DataFrame(columns=results_filtered.columns)
+        new_table = new_table.loc[:, ~new_table.columns.str.startswith('h')]
+
+        melted_df = results_filtered.melt(id_vars=['data', 'nom_estacio', 'contaminant'], 
+                                          value_vars=[f'h{i:02d}' for i in range(1, 25)], 
+                                          var_name='hour', value_name='value')
+        melted_df['hour'] = melted_df['hour'].str.extract('(\d+)').astype(int) - 1
+        melted_df['data'] = pd.to_datetime(melted_df['data'])
+        melted_df['data'] = melted_df.apply(lambda row: row['data'].replace(hour=row['hour']), axis=1)
+        new_table = melted_df.drop(columns=['hour'])
+
+        new_table = new_table.sort_values(by='data')
+
+        new_table.to_csv(output_file, index=False)
+        print(f"Data saved to {output_file}")
+        return new_table
     
     def fetch_data_with_filter(self, filter):
         """
