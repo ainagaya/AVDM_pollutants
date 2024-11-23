@@ -91,6 +91,7 @@ def plot_bubble_map(dataframe, station_coordinates, title, contaminant='NO2'):
 
     # Plot the map and add station points
     fig, ax = plt.subplots(figsize=(10, 10))
+    ax.axis('off')
     cat.plot(ax=ax, color='lightgray', edgecolor='black')
 
     for station in stations_df['nom_estacio']:

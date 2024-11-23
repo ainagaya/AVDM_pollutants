@@ -136,6 +136,7 @@ class DataFetcher:
 
         new_table.to_csv(output_file, index=False)
         print(f"Data saved to {output_file}")
+        print("DEBUG: new_table", new_table)
         return new_table
 
     def fetch_and_process_data(self, municipality, year, month):
@@ -146,17 +147,24 @@ class DataFetcher:
             return processed_data[processed_data['data'].dt.year == year]
         else:
             print(f"Data for {municipality} in {month}/{year} fetched and processed")
-            return processed_data[(processed_data['data'].dt.year == year) & (processed_data['data'].dt.month == month)]
+            print("DEBUG: processed data", processed_data)
+            return processed_data[(processed_data['data'].dt.year == year) & (processed_data['data'].dt.month == int(month))]
         
     def fetch_and_process_data_no_filter(self, year, month):
         processed_data = self.process_and_save_data_no_filter()
+        print("DEBUG: processed data", processed_data)
         processed_data['data'] = pd.to_datetime(processed_data['data'])
         if month == 'all':
             print(f"Data for all municipalities in {year} fetched and processed")
+            print("DEBUG: processed data_year", processed_data['data'].dt.year)
             return processed_data[processed_data['data'].dt.year == year]
         else:
             print(f"Data for all municipalities in {month}/{year} fetched and processed")
-            return processed_data[(processed_data['data'].dt.year == year) & (processed_data['data'].dt.month == month)]
+            processed_data_filtered_yearly = processed_data[processed_data['data'].dt.year == year]
+            print("DEBUG: processed data_year", processed_data_filtered_yearly)
+            processed_data_filtered_monthly = processed_data_filtered_yearly[processed_data_filtered_yearly['data'].dt.month == int(month)]
+            print("DEBUG: processed data_month", processed_data_filtered_monthly)
+            return processed_data_filtered_monthly
 
         
     def get_station_coordinates(self, filter="None"):

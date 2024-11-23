@@ -10,10 +10,10 @@ def main():
     yaml_file_path = 'WMO.yaml'
     thresholds = load_yaml(yaml_file_path)
     
-    fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu", limit=200000)
+    fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu", limit=20000)
     municipality = 'all'
     year = 2024
-    month = 'all'
+    month = '10'
 
     if month == 'all':
         last_data_needed = pd.to_datetime(f"{year}-01-01")
@@ -31,6 +31,7 @@ def main():
         filter = "None"
     else:
         processed_data = fetcher.fetch_and_process_data(municipality, year, month)
+        print("Processed data: ",  processed_data)
         stations = fetcher.list_available_options_with_filter("nom_estacio", f"municipi='{municipality}'")
         filter = f"municipi='{municipality}'"
 
@@ -43,7 +44,9 @@ def main():
 
     if last_downloaded_data > last_data_needed:
         raise ValueError("Data is outdated. You need to download more data.")
-  
+    
+    total_hour_counts = processed_data.groupby('nom_estacio').size()
+    print("total_hour_counts: ", total_hour_counts)
     
     pollutants = thresholds.keys()
     
@@ -57,6 +60,7 @@ def main():
     plot_stations_in_map(station_coordinates)
 
     # normalize accumulator
+    normalized_accumulator = pd.DataFrame(accumulator).div(total_hour_counts, axis=0)
     
 
     plot_bubble_map(accumulator, station_coordinates, f'NO2 hourly Threshold Exceedances in {municipality} Stations for {month}/{year}')
