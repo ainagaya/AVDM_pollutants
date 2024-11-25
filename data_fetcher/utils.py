@@ -59,6 +59,7 @@ def plot_stations_in_map(station_coordinates):
     # Plot the map and add station points
     fig, ax = plt.subplots(figsize=(10, 10))
     cat.plot(ax=ax, color='lightgray', edgecolor='black')
+    ax.axis('off')
 
     # Plot the stations
     stations_df.plot(ax=ax, color='blue', markersize=30)
@@ -76,7 +77,10 @@ def plot_bubble_map(dataframe, station_coordinates, title, contaminant='NO2'):
     print("station_coordinates: ", station_coordinates)
 
     # Split the columns, keep only the contaminant we want to plot
-    dataframe = dataframe[contaminant]
+    try:
+        dataframe = dataframe[contaminant]
+    except KeyError:
+        dataframe = dataframe
 
     cat = gpd.read_file('shp_cat/divisions-administratives-v2r1-comarques-1000000-20240705.shp')
 
@@ -94,14 +98,54 @@ def plot_bubble_map(dataframe, station_coordinates, title, contaminant='NO2'):
     ax.axis('off')
     cat.plot(ax=ax, color='lightgray', edgecolor='black')
 
+    # Maximum value of the dataframe
+    max_value = dataframe.apply(pd.to_numeric, errors='coerce').max() * 24
+
+    print("max_value: ", max_value)
+        
+
     for station in stations_df['nom_estacio']:
         print("STATION: ", station)
         value = dataframe.get(station, 0)
         print("VALUE: ", value)
         # Plot the stations
         if value != 'NaN':
-            stations_df[stations_df["nom_estacio"] == station].plot(ax=ax, color='blue', markersize=value, alpha=.2)
+            percentage = value * 100
+            print(station, percentage)
+            color = plt.cm.magma(value*24 / max_value)
+            stations_df[stations_df["nom_estacio"] == station].plot(ax=ax, markersize=percentage*10, alpha=.4, color=color)
 
+    # Add a legend with circle sizes, the value indicates how many times the threshold was exceeded
+    for value in [1, 5, 10, 20]:
+        plt.scatter([], [], c='blue', alpha=0.2, s=value*10, label=str(value))
+    # Add a color bar with the colors used to represent the threshold exceedances
+    sm = plt.cm.ScalarMappable(cmap=plt.cm.magma, norm=plt.Normalize(vmin=0, vmax=max_value))
+    sm.set_array([])
+    plt.colorbar(sm, ax=ax, label='Average threshold exceedances per day')
+    plt.legend(title='% of threshold exceedances', loc='upper right', frameon=False)
     plt.title(title)
+
+    # Add a small square showing Barcelona
+    inset_ax = fig.add_axes([0.4, 0.1, 0.2, 0.2])
+    cat.plot(ax=inset_ax, color='lightgray', edgecolor='black')
+    for station in stations_df['nom_estacio']:
+        print("STATION: ", station)
+        value = dataframe.get(station, 0)
+        print("VALUE: ", value)
+        # Plot the stations
+        if value != 'NaN':
+            percentage = value * 100
+            print(station, percentage)
+            color = plt.cm.magma(value * 24 / max_value)
+            stations_df[stations_df["nom_estacio"] == station].plot(ax=inset_ax, markersize=percentage*10, alpha=.4, color=color)
+    inset_ax.axis('off')
+    inset_ax.set_xlim(410000, 440000)
+    inset_ax.set_ylim(4.57e6, 4.595e6)
+    inset_ax.set_title('Barcelona')
+
+
     plt.show()
+
+    # remove '/' from the title
+    title = title.replace('/', '')
     plt.savefig(f'bubble_map_{title}.png')

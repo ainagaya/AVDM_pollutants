@@ -10,10 +10,11 @@ def main():
     yaml_file_path = 'WMO.yaml'
     thresholds = load_yaml(yaml_file_path)
     
-    fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu", limit=20000)
+    fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu", limit=21000)
     municipality = 'all'
     year = 2024
     month = '10'
+    #month = 'all'
 
     if month == 'all':
         last_data_needed = pd.to_datetime(f"{year}-01-01")
@@ -53,6 +54,14 @@ def main():
     accumulator = initialize_accumulator(stations, pollutants)
     accumulator = update_accumulator(accumulator, processed_data, stations, pollutants, thresholds)
 
+    # Remove stations with NaN values in the accumulator
+    accumulator = accumulator.dropna()
+
+    # Keep only the values for NO2, with the key 'NO2' in the column axis
+    accumulator = accumulator['NO2']
+
+    print("accumulator: ", accumulator)
+
     station_coordinates = fetcher.get_station_coordinates(filter=filter)
 
     print("station_coordinates: ", station_coordinates)
@@ -60,10 +69,28 @@ def main():
     plot_stations_in_map(station_coordinates)
 
     # normalize accumulator
-    normalized_accumulator = pd.DataFrame(accumulator).div(total_hour_counts, axis=0)
-    
+    normalized_accumulator = accumulator.copy()
+    for station in stations:
+        print("station: ", station)
+        try:
+            print("accumulator.loc[station]: ", accumulator.loc[station])
+        except:
+            print("accumulator.loc[station]: ", 0)
+        try:
+            print("total_hour_counts.loc[station]: ", total_hour_counts.loc[station])
+        except:
+            print("total_hour_counts.loc[station]: ", 0)
+        if accumulator.loc[station] != 'NaN':
+            if total_hour_counts.loc[station] != 0 and total_hour_counts.loc[station] != 'NaN':
+                try:
+                    normalized_accumulator[station] = accumulator.loc[station] / total_hour_counts.loc[station]
+                except:
+                    normalized_accumulator[station] = 0
+    print("normalized_accumulator: ", normalized_accumulator)
 
-    plot_bubble_map(accumulator, station_coordinates, f'NO2 hourly Threshold Exceedances in {municipality} Stations for {month}/{year}')
+    #plot_bubble_map(accumulator, station_coordinates, f'NO2 hourly Threshold Exceedances in {municipality} Stations for {month}/{year}')
+
+    plot_bubble_map(normalized_accumulator, station_coordinates, f'NO2 hourly Threshold Exceedances in {municipality} Stations for {month}/{year}')
 
 if __name__ == "__main__":
     main()

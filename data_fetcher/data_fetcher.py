@@ -81,7 +81,7 @@ class DataFetcher:
         Returns the coordinates of a station
         """
         # remove nan instances
-        if type(station) != str:
+        if not isinstance(station, str):
             return pd.DataFrame({})
         # Escape single quotes in the station name
         safe_station = station.replace("'", "''")
@@ -94,24 +94,32 @@ class DataFetcher:
         """
         Fetches data from the dataset with a filter, processes it and saves it to a CSV file
         """
+
+        # Retrieve the data, fill NaN values with 0 and remove the 'h' columns
         results_filtered = self.fetch_data_with_filter(filter)
         results_filtered.fillna(0, inplace=True)
-
         new_table = pd.DataFrame(columns=results_filtered.columns)
         new_table = new_table.loc[:, ~new_table.columns.str.startswith('h')]
 
+        # Melt the DataFrame to have a row for each hour
         melted_df = results_filtered.melt(id_vars=['data', 'nom_estacio', 'contaminant'], 
                                           value_vars=[f'h{i:02d}' for i in range(1, 25)], 
                                           var_name='hour', value_name='value')
+        # Extract the hour from the column name and subtract 1 to have the correct hour
         melted_df['hour'] = melted_df['hour'].str.extract('(\d+)').astype(int) - 1
+
+        # Replace the date with the date and hour
         melted_df['data'] = pd.to_datetime(melted_df['data'])
         melted_df['data'] = melted_df.apply(lambda row: row['data'].replace(hour=row['hour']), axis=1)
-        new_table = melted_df.drop(columns=['hour'])
 
+        # Drop the hour column and sort the DataFrame by date
+        new_table = melted_df.drop(columns=['hour'])
         new_table = new_table.sort_values(by='data')
 
+        # Save the processed data to a CSV file
         new_table.to_csv(output_file, index=False)
         print(f"Data saved to {output_file}")
+
         return new_table
 
     def process_and_save_data_no_filter(self, output_file='filtered_data.csv'):
