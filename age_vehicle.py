@@ -86,7 +86,7 @@ def num_vehi_by_age_T(file_name,type_car = 'Turismes'):
     for i in range(len(val_anti)):
         norm_num_cars_list.append(num_cars_list[i]/sum(num_cars_list))
     n_col = len(antique_list)
-    df_result = pd.DataFrame([[type_car]*n_col,[antiguetat2020v3.iloc[1,0]]*n_col,antique_list,num_cars_list,norm_num_cars_list], columns=range(n_col), index=['Tipus_Vehicles','Any','Antiguitat','Valor','Perc_valor_any'])
+    df_result = pd.DataFrame([[type_car]*n_col,[antiguetat2020v3.iloc[1,0]]*n_col,antique_list,num_cars_list,norm_num_cars_list], columns=range(n_col), index=['Vehicle','Year','Antiquity','Value','Perc_value_year'])
     return df_result.T
 
 # plot d '11 a 20 anys versus no2,co,pm2.5 in interval 2019-2023
@@ -107,10 +107,10 @@ processed_data = pd.read_csv('filtered_data_from.csv')
 # return type of column data to datatime
 processed_data['data'] = pd.to_datetime(processed_data['data'])
 # print(processed_data['data'].min()) #2019-01-02 
+
 # plot the corresponing car pollutants from interval 2019-2023 for a respective station
 car_pollu = ['NO2','CO','PM2.5']
 # Figure 1
-
 fig, ax = plt.subplots()
 for p in car_pollu:
     resampled = accumulate_data(processed_data,'Barcelona (Palau Reial)', p, 'A')
@@ -118,6 +118,7 @@ for p in car_pollu:
 ax.set_title('Detected car pollutants in Barcelona (Palau Reial) for interval 2019-2023')
 ax.set_xlabel('Date')
 ax.set_ylabel('Pollutants (ug/m^3)')
+ax.ticklabel_format(axis='y',style='sci',scilimits = (0,0))
 ax.legend(car_pollu)
 
 def values_pollutant(data,station='Barcelona (Palau Reial)',pollutant='NO2',time='A'):
@@ -128,70 +129,83 @@ def values_pollutant(data,station='Barcelona (Palau Reial)',pollutant='NO2',time
     values_poll = [] #2019,2020,2021,2022,2023
     for i in range(resampled.shape[0]):
         values_poll.append(resampled.iat[i,0])
-    return values_poll
+    values_poll_norm = values_poll/np.max(values_poll)
+    return values_poll,values_poll_norm
     
 # we get the values of the pollutant for the interval 2019-2023
-values_no2 = values_pollutant(processed_data)
-values_co = values_pollutant(processed_data,pollutant='CO')
+values_no2, values_no2_norm = values_pollutant(processed_data)
+values_co, values_co_norm = values_pollutant(processed_data,pollutant='CO')
 
 # create the complete dataframe for interval 2019-2023 
 vehicles = ['Turismes', 'Motos', 'Ciclomotors', 'Furgonetes', 'Camions', 'Altres vehicles']
+new_vehicles = ['Touring cars', 'Motorcycles', 'Mopeds', 'Vans', 'Trucks', 'Other vehicles']
 df_list = []
 for v in vehicles:
     for i in np.arange(19,24):
         mini_df = num_vehi_by_age_T('num_vehicles_by_age/20%i_antiguitat_tipus_vehicle.csv'%i,type_car=v)
         # add value of pollutants
-        mini_df['NO2'] = [values_no2[int(mini_df.loc[0,'Any'])-2019]]*mini_df.shape[0]
-        mini_df['CO'] = [values_co[int(mini_df.loc[0,'Any'])-2019]]*mini_df.shape[0]
+        # double_mini_df = pd.concat([mini_df]*2, ignore_index=True)
+        # val_pollutants = [values_no2_norm[(2000+i)-2019]]*mini_df.shape[0]
+        # val_pollutants.extend([values_co_norm[(2000+i)-2019]]*mini_df.shape[0])
+        # name_pollutants = ['NO2']*mini_df.shape[0]
+        # name_pollutants.extend(['CO']*mini_df.shape[0])
+        # double_mini_df['Value_pollutant'] = val_pollutants
+        # double_mini_df['Pollutant'] = name_pollutants
+        mini_df['NO2'] = [values_no2_norm[int(mini_df.loc[0,'Year'])-2019]]*mini_df.shape[0]
+        mini_df['CO'] = [values_co_norm[int(mini_df.loc[0,'Year'])-2019]]*mini_df.shape[0]
+        mini_df = mini_df.replace({'Vehicle': v}, new_vehicles[vehicles.index(v)])
         df_list.append(mini_df)
 year_age = pd.concat(df_list).reset_index()
 
-# Figure 2
-mod_year_age = year_age[year_age['Antiguitat']=='D\'11 a 20 anys'].reset_index()
+
+# Figure subplot 1
+years2 = [2019]
+for y in np.arange(len(years2)):
+    mod2_year_age = year_age[year_age['Year']==years2[y]]
+    # Group by 'Antiguitat' and 'Vehicle' to sum the 'Valor'
+    grouped = mod2_year_age.groupby(['Antiquity', 'Vehicle']).agg({'Value': 'sum'}).reset_index()
+    # Pivot the table so that 'Antiguitat' is the index and each vehicle type is a column
+    pivot_df = grouped.pivot(index='Antiquity', columns='Vehicle', values='Value')
+    # Plot the stacked bar chart
+    pivot_df.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='Set2')
+    plt.xlabel('Antiquity')
+    plt.ylabel('Value')
+    plt.title('Stacked Bar Chart: Valor of Vehicle by Age and Type')
+    plt.xticks(rotation=45, ha='right')  
+    plt.ticklabel_format(axis='y',style='sci', scilimits = (0,0))
+    plt.legend(title="Vehicle", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()  
+
+# Figure subplot 2
+mod_year_age = year_age[year_age['Antiquity']=='D\'11 a 20 anys'].reset_index()
 # normalize the vehicle number
-valor_norm = []
-for v in vehicles:
-    small_df = mod_year_age[(mod_year_age.Tipus_Vehicles == v)]
+value_norm = []
+for v in new_vehicles:
+    small_df = mod_year_age[(mod_year_age.Vehicle == v)]
     for i in small_df.index:
-        valor_norm.append(small_df.Valor[i]/small_df.Valor.max())
-mod_year_age['Valor_norm'] = valor_norm
+        value_norm.append(small_df.Value[i]/small_df.Value.max())
+mod_year_age['Norm_value'] = value_norm
 
 def plot_fig2(df,pollutant='NO2'):
     """Function that plots a figure using a df and depending of the pollutant"""
-    fig2 = sns.lmplot(data=df, x='Valor_norm', y=pollutant, hue='Any', col='Tipus_Vehicles')
+    fig2 = sns.lmplot(data=df, x='Norm_value', y=pollutant, hue='Year', col='Vehicle')
+    fig2.tight_layout(pad=2) 
     j = 0
     for ax in fig2.axes.flat:
-        ini_coor = (df.loc[(j*5),'Valor_norm'], df.loc[(j*5),pollutant])
-        final_coor = (df.loc[(j*5+4),'Valor_norm'], df.loc[(j*5+4),pollutant])
+        ini_coor = (df.loc[(j*5),'Norm_value'], df.loc[(j*5),pollutant])
+        final_coor = (df.loc[(j*5+4),'Norm_value'], df.loc[(j*5+4),pollutant])
         ax.axline(ini_coor,final_coor, color='k', ls='-')
         ax.grid(True, axis='both', ls=':')
+        ax.set(xlabel='Normalized number of vehicles', ylabel='Normalized NO2 value')
         j+=1
 
-
-plot_fig2(mod_year_age)
+mod3_year_age = mod_year_age[mod_year_age['Vehicle'] != 'Other vehicles']
+plot_fig2(mod3_year_age)
 # plot_fig2(mod_year_age,pollutant='CO')
-# plt.show()
+plt.show()
 
-# Bar Chart, Line Chart, Heatmap
 # plottin everything, we identifiy the mist important vehicle and the most common age. we can fixate in the plot.
 # to plot diverse relations for this age, we first normalize to get better results.
-
-# Figure 3
-mod2_year_age = year_age[year_age['Any']==2019]
-# Group by 'Antiguitat' and 'Tipus_Vehicles' to sum the 'Valor'
-grouped = mod2_year_age.groupby(['Antiguitat', 'Tipus_Vehicles']).agg({'Valor': 'sum'}).reset_index()
-# Pivot the table so that 'Antiguitat' is the index and each vehicle type is a column
-pivot_df = grouped.pivot(index='Antiguitat', columns='Tipus_Vehicles', values='Valor')
-# Plot the stacked bar chart
-pivot_df.plot( kind='bar', stacked=True, figsize=(10, 6), colormap='Set2')
-
-plt.xlabel('Antiguitat')
-plt.ylabel('Valor')
-plt.title('Stacked Bar Chart: Valor of Vehicles by Age and Type')
-plt.xticks(rotation=45, ha='right')  
-plt.legend(title="Tipus de Vehicles", bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.tight_layout()  
-plt.show()
 
 
 
