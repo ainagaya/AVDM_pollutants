@@ -159,18 +159,24 @@ year_age = pd.concat(df_list).reset_index()
 
 
 # Figure subplot 1
-years2 = [2019]
+
+years2 = [2023]
 for y in np.arange(len(years2)):
     mod2_year_age = year_age[year_age['Year']==years2[y]]
+    #Change the names of Antiquity column
+    antiquity = ["Menys d'un any d'antiguitat", '1 any', '2 anys', '3 anys', '4 anys', '5 anys','6 anys', '7 anys', '8 anys', '9 anys', '10 anys', "D'11 a 20 anys",'Més de 20 anys', 'No consta']
+    new_antiquity = ["<1", '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', ">10,<20 ",'>20', 'Unknown']
+    for a in antiquity:
+        mod2_year_age = mod2_year_age.replace({'Antiquity': a}, new_antiquity[antiquity.index(a)])
     # Group by 'Antiguitat' and 'Vehicle' to sum the 'Valor'
     grouped = mod2_year_age.groupby(['Antiquity', 'Vehicle']).agg({'Value': 'sum'}).reset_index()
     # Pivot the table so that 'Antiguitat' is the index and each vehicle type is a column
     pivot_df = grouped.pivot(index='Antiquity', columns='Vehicle', values='Value')
     # Plot the stacked bar chart
     pivot_df.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='Set2')
-    plt.xlabel('Antiquity')
-    plt.ylabel('Value')
-    plt.title('Stacked Bar Chart: Valor of Vehicle by Age and Type')
+    plt.xlabel('Antiquity (years)')
+    plt.ylabel('Number of units')
+    plt.title('Vehicles by Age and Type in %s'%int(years2[y]))
     plt.xticks(rotation=45, ha='right')  
     plt.ticklabel_format(axis='y',style='sci', scilimits = (0,0))
     plt.legend(title="Vehicle", bbox_to_anchor=(1.05, 1), loc='upper left')
