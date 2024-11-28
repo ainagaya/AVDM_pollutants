@@ -18,7 +18,7 @@ def safe_min_nonzero(x):
     non_zero_values = x[x > 0]
     return non_zero_values.min() if len(non_zero_values) > 0 else 0
 # Defining the parameters
-pollu ='NO2'
+pollu ='PM10'
 T='H'
 # To select the type of statistic : 1==max, 2==min, 3==mode, 4==median
 Stat=4
@@ -159,7 +159,7 @@ for i in range(len(estacions)):
 merged_df=merged_df.reset_index()
 merged_df = merged_df[merged_df['value']!=0]
 print(merged_df)
-merged_df0 = merged_df[merged_df['station']==estacions[0]]
+merged_df0 = merged_df[merged_df['station']==estacions[1]]
 
 # Setting limits and max
 Max = {'NO2':40,'PM2.5':25,'CO':10,'PM10':40}
@@ -175,10 +175,10 @@ print(trend)
 # Plot the results
 plt.figure(figsize=(10,6))
 sns.violinplot(x='estatActual', y='value', data=merged_df0)
-plt.title(f'{pollu} level vs Traffic Status for hour during January and February.')
+plt.title(f'{pollu} level vs traffic density for hour during two months in {estacions[1]}',fontsize=14)
 plt.ylim(bottom=0)
-plt.xlabel('Traffic Status')
-plt.ylabel(f'{pollu} level ({unitat[0]})')
+plt.xlabel('Traffic density',fontsize=14)
+plt.ylabel(f'{pollu} level ({unitat[0]})',fontsize=14)
 ymin, ymax = plt.ylim()
 plt.plot(x,trend,linestyle='--',color='black',label='Trendline')
 
@@ -186,7 +186,7 @@ plt.axhspan(0, Minimum[pollu], color='green', alpha=0.3, label='WHO limits')
 plt.axhspan(Minimum[pollu], Medium[pollu], color='yellowgreen', alpha=0.3, label='Legal future')
 plt.axhspan(Medium[pollu], Max[pollu], color='yellow', alpha=0.3, label='Legal now')
 plt.axhspan(Max[pollu],ymax,color='red', alpha=0.3, label='Ilegal')
-plt.legend(loc='upper right')
+plt.legend(loc='upper right',fontsize=14)
 plt.show()
 
 
