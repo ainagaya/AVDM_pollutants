@@ -1,4 +1,3 @@
-
 from data_fetcher.data_fetcher import DataFetcher
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +5,7 @@ import pandas as pd
 from data_fetcher.graphics import plot_timeseries, accumulate_data # type: ignore
 import seaborn as sns
 
-# columns database
+# original columns of the dataset:
 #codi_eoi
 #nom_estacio
 #data
@@ -28,10 +27,12 @@ import seaborn as sns
 #geocoded_column
 
 # # which contaminants are detected by each station?
+# # we get all avalible stations
 # available_stations = fetcher.list_available_options_with_filter("nom_estacio", "municipi='Barcelona'")
 # for station in available_stations:
 #     available_contaminant = fetcher.list_available_options_with_filter("contaminant", "nom_estacio='%s'"%station)
 #     print(station, available_contaminant, len(available_contaminant))
+# pie plots of stations and contaminants
 # dfc = fetcher.process_and_save_data("municipi='Barcelona'")
 # print(len(dfc))
 # plt.figure('contaminants')
@@ -52,9 +53,9 @@ def num_vehi_by_age(file_name,type_car = 'Turismes'):
     antiguetat2020v3 = antiguetat2020v2[~antiguetat2020v2.Tipus_Vehicles.isin(ignored_type_car)]
     # all possible ages of the vehicles
     val_anti = antiguetat2020v3.Antiguitat.unique()
-    # get the total value in Barcelona for each kind of antiquety
-    antique_list = ['Tipus_Vehicles',antiguetat2020v3.columns[0]]
-    num_cars_list = [type_car,antiguetat2020v3.iloc[1,0]]
+    # get the total value in Barcelona for each kind of antiquity
+    antique_list = ['Tipus_Vehicles',antiguetat2020v3.columns[0]] #columns name
+    num_cars_list = [type_car,antiguetat2020v3.iloc[1,0]] #values
     for i in range(len(val_anti)):
         df_antique = antiguetat2020v3[antiguetat2020v3.Antiguitat == val_anti[i]]
         antique_list.append(val_anti[i])
@@ -63,7 +64,7 @@ def num_vehi_by_age(file_name,type_car = 'Turismes'):
     return df_result
 
 def num_vehi_by_age_T(file_name,type_car = 'Turismes'):
-    """Function that extract the number of type_car by age in Barcelona in shape (14,3)"""
+    """Function that extract the number of type_car by age in Barcelona and applies T. Also generates new columns"""
     antiguetat2020 = pd.read_csv(file_name)
     # drop no needed columns
     antiguetat2020v2 = antiguetat2020.drop(['Codi_Districte','Codi_Barri','Seccio_Censal','Nom_Barri'],axis=1)
@@ -73,7 +74,7 @@ def num_vehi_by_age_T(file_name,type_car = 'Turismes'):
     antiguetat2020v3 = antiguetat2020v2[~antiguetat2020v2.Tipus_Vehicles.isin(ignored_type_car)]
     # all possible ages of the vehicles
     val_anti = antiguetat2020v3.Antiguitat.unique()
-    # get the total value in Barcelona for each kind of antiquety
+    # get the total value in Barcelona for each kind of antiquity
     antique_list = []
     num_cars_list = []
     # pair each age with the corresponding value
@@ -89,7 +90,6 @@ def num_vehi_by_age_T(file_name,type_car = 'Turismes'):
     df_result = pd.DataFrame([[type_car]*n_col,[antiguetat2020v3.iloc[1,0]]*n_col,antique_list,num_cars_list,norm_num_cars_list], columns=range(n_col), index=['Vehicle','Year','Antiquity','Value','Perc_value_year'])
     return df_result.T
 
-# plot d '11 a 20 anys versus no2,co,pm2.5 in interval 2019-2023
 # Barcelona (Eixample) ['NO2' 'NO' 'O3' 'PM2.5' 'PM10' 'CO' 'SO2'] 7
 # Barcelona (Ciutadella) ['NO2' 'O3' 'NO' 'NOX'] 4
 # Barcelona (Observatori Fabra) ['PM10' 'NOX' 'NO2' 'O3' 'NO'] 5
@@ -98,7 +98,8 @@ def num_vehi_by_age_T(file_name,type_car = 'Turismes'):
 # Barcelona (Poblenou) ['NOX' 'NO2' 'PM10' 'NO'] 4
 # Barcelona (Gràcia - Sant Gervasi) ['NO' 'O3' 'NO2' 'SO2' 'NOX' 'PM10' 'CO'] 7
 # Barcelona (Sants) ['NO' 'NO2' 'NOX'] 3
-# extract data and filter by date
+
+# extract data and filter by date for the first time
 # fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=200000)
 # processed_data = fetcher.fetch_with_filter_and_data_and_process('2019-01-01T01:00:00.000',"municipi='Barcelona'")
 
@@ -157,9 +158,8 @@ for v in vehicles:
         df_list.append(mini_df)
 year_age = pd.concat(df_list).reset_index()
 
-
-# Figure subplot 1
-
+# Figure 2
+# plotting everything in stacked bars plots, we identifiy the most important vehicle and the most common age. 
 years2 = [2023]
 for y in np.arange(len(years2)):
     mod2_year_age = year_age[year_age['Year']==years2[y]]
@@ -168,9 +168,9 @@ for y in np.arange(len(years2)):
     new_antiquity = ["<1", '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', ">10,<20 ",'>20', 'Unknown']
     for a in antiquity:
         mod2_year_age = mod2_year_age.replace({'Antiquity': a}, new_antiquity[antiquity.index(a)])
-    # Group by 'Antiguitat' and 'Vehicle' to sum the 'Valor'
+    # Group by 'Antiquity' and 'Vehicle' to sum the 'Value'
     grouped = mod2_year_age.groupby(['Antiquity', 'Vehicle']).agg({'Value': 'sum'}).reset_index()
-    # Pivot the table so that 'Antiguitat' is the index and each vehicle type is a column
+    # Pivot the table so that 'Antiquity' is the index and each vehicle type is a column
     pivot_df = grouped.pivot(index='Antiquity', columns='Vehicle', values='Value')
     # Plot the stacked bar chart
     pivot_df.plot(kind='bar', stacked=True, figsize=(10, 6), colormap='Set2')
@@ -182,7 +182,8 @@ for y in np.arange(len(years2)):
     plt.legend(title="Vehicle", bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()  
 
-# Figure subplot 2
+# Figure 3
+# to plot diverse relations for this age, we first normalize to get better results.
 mod_year_age = year_age[year_age['Antiquity']=='D\'11 a 20 anys'].reset_index()
 # normalize the vehicle number
 value_norm = []
@@ -198,6 +199,7 @@ def plot_fig2(df,pollutant='NO2'):
     fig2.tight_layout(pad=2) 
     j = 0
     for ax in fig2.axes.flat:
+        # we draw the line between initial and final points
         ini_coor = (df.loc[(j*5),'Norm_value'], df.loc[(j*5),pollutant])
         final_coor = (df.loc[(j*5+4),'Norm_value'], df.loc[(j*5+4),pollutant])
         ax.axline(ini_coor,final_coor, color='k', ls='-')
@@ -205,13 +207,20 @@ def plot_fig2(df,pollutant='NO2'):
         ax.set(xlabel='Normalized number of vehicles', ylabel='Normalized NO2 value')
         j+=1
 
-mod3_year_age = mod_year_age[mod_year_age['Vehicle'] != 'Other vehicles']
+mod3_year_age = mod_year_age[(mod_year_age['Vehicle'] != 'Other vehicles')]
 plot_fig2(mod3_year_age)
-# plot_fig2(mod_year_age,pollutant='CO')
+# plot_fig2(mod3_year_age,pollutant='CO')
 plt.show()
 
-# plottin everything, we identifiy the mist important vehicle and the most common age. we can fixate in the plot.
-# to plot diverse relations for this age, we first normalize to get better results.
-
-
-
+# for pair figures
+#  ['Touring cars', 'Motorcycles', 'Mopeds', 'Vans', 'Trucks', 'Other vehicles']
+# no_car = [[0,1,2,3],[0,1,4,5],[2,3,4,5]]
+# for i in no_car:
+#     mod3a_year_age = mod_year_age[(mod_year_age['Vehicle'] != new_vehicles[i[0]])]
+#     mod3b_year_age = mod3a_year_age[(mod3a_year_age['Vehicle'] != new_vehicles[i[1]])]
+#     mod3c_year_age = mod3b_year_age[(mod3b_year_age['Vehicle'] != new_vehicles[i[2]])]
+#     mod3d_year_age = mod3c_year_age[(mod3b_year_age['Vehicle'] != new_vehicles[i[3]])]
+#     mod3d_year_age = (mod3d_year_age.drop(['level_0'],axis=1)).reset_index()
+#     plot_fig2(mod3d_year_age)
+#     # plot_fig2(mod_year_age,pollutant='CO')
+#     plt.show()
