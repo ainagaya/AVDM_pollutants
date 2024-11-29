@@ -2,9 +2,9 @@
 
 ## What is it?
 
-AVDM_pollutants is a study on traffic pollution before and after the Low Emission Zone (LEZ or ZBE in catalan) restrictions focused in Barcelona.
+AVDM_pollutants is a pollution study in Barcelona that focuses on traffic pollution and then compares the trends before and after the Barcelona Low Emission Zone Law.
 
-In this work we study the data that automatic enviromental stations provide each hour before and after the application of the LEZ in Barcelona. 
+In this work, we examine various data sets, including vehicle age statistics, traffic density by hour, and pollution levels. Additionally, this data will be compared to current and prospective EU regulatory values as well as WHO limitations.
 
 ## Main features
 
