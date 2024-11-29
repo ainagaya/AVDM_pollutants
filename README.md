@@ -16,7 +16,7 @@ In this work, we examine various data sets, including vehicle age statistics, tr
 - age_vehicle: code to generate figures related with age of vehicles and air pollutants
 - compare_data_with_WMO
 - example: code example of use of the dataset
-- maps: map generator
+- maps: generates a map of Catalonia to visualize the pollution levels in each station. Uses WMO.yaml as configuration file.
 - plotly_heatmap: code to generate plotly heatmaps
 - traffic: code to generate figures related with traffic and air pollutants
 
