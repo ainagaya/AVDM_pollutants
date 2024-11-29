@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 class DataFetcher:
+    """
+    Class to fetch data from a Socrata dataset and process it
+    """
     def __init__(self, domain, app_token, dataset_id, limit=2000):
         self.client = Socrata(domain, app_token)
         self.dataset_id = dataset_id
@@ -148,6 +151,9 @@ class DataFetcher:
         return new_table
 
     def fetch_and_process_data(self, municipality, year, month):
+        """
+        Fetches data from the dataset for a given municipality, year and month and processes it
+        """
         processed_data = self.process_and_save_data(f"municipi='{municipality}'")
         processed_data['data'] = pd.to_datetime(processed_data['data'])
         if month == 'all':
@@ -159,6 +165,9 @@ class DataFetcher:
             return processed_data[(processed_data['data'].dt.year == year) & (processed_data['data'].dt.month == int(month))]
         
     def fetch_and_process_data_no_filter(self, year, month):
+        """
+        Fetches data from the dataset for all municipalities, year and month and processes it
+        """
         processed_data = self.process_and_save_data_no_filter()
         print("DEBUG: processed data", processed_data)
         processed_data['data'] = pd.to_datetime(processed_data['data'])
@@ -176,6 +185,9 @@ class DataFetcher:
 
         
     def get_station_coordinates(self, filter="None"):
+        """
+        Returns the coordinates of stations
+        """
         if filter == "None":
             stations = self.list_available_options("nom_estacio")
         else:

@@ -10,6 +10,14 @@ To be used as examples
 
 
 def plot_timeseries(data, title, ylabel, xlabel='Date', figsize=(10, 6)):
+    """
+    Plots a timeseries
+    :param data: pd.DataFrame, timeseries data
+    :param title: str, title of the plot
+    :param ylabel: str, label for the y-axis
+    :param xlabel: str, label for the x-axis
+    :param figsize: tuple, size of the figure
+    """
     fig, ax = plt.subplots(figsize=figsize)
     data.plot(ax=ax)
     ax.set_title(title)
@@ -19,6 +27,14 @@ def plot_timeseries(data, title, ylabel, xlabel='Date', figsize=(10, 6)):
     plt.show()
 
 def accumulate_data(data, station, contaminant, frequency):
+    """
+    Accumulates data for a given station and contaminant
+    :param data: pd.DataFrame, data to be accumulated
+    :param station: str, station name
+    :param contaminant: str, contaminant name
+    :param frequency: str, frequency for resampling
+    :return: pd.DataFrame, resampled data
+    """
     filtered_data = data[(data['nom_estacio'] == station) & (data['contaminant'] == contaminant)]
     numeric_data = filtered_data.drop(columns=['nom_estacio', 'contaminant'])
 
