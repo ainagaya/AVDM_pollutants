@@ -17,13 +17,28 @@ def safe_mode(x):
 def safe_min_nonzero(x):
     non_zero_values = x[x > 0]
     return non_zero_values.min() if len(non_zero_values) > 0 else 0
-# Defining the parameters
+"""
+In order for this code to work you need to have the Mandatory CSV files in the same folder as this code.
+
+The files can be download in https://opendata-ajuntament.barcelona.cat/data/dataset/trams/resource/ec409c44-6a07-411d-8f53-efb5c1b7e989 
+and in https://opendata-ajuntament.barcelona.cat/data/dataset/trams/resource/7ab9ef24-dd6d-40f4-a186-4563a491a81c
+Also an aditional one is needed for the coords of the different stations:
+https://opendata-ajuntament.barcelona.cat/data/ca/dataset/transit-relacio-trams/resource/c97072a3-3619-4547-84dd-f1999d2a3fec
+
+With that and the requirements the code should run smoothly
+
+"""
+
+
+
+
+# Defining the parameters. This can change in order to obtain different pollutants and time lengths
 pollu ='PM10'
 T='H'
 # To select the type of statistic : 1==max, 2==min, 3==mode, 4==median
 Stat=4
 
-#Getting data from API 
+#Getting data from API. this limits=15000 will change if you are running this code months later of november 2024. 
 fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=15000)
 
 # Now, obtain NO2 each day
@@ -37,7 +52,7 @@ print(estacions)
 
 # Obtaining units of the pollutant
 unitat = fetcher.list_available_options_with_filter('unitats',f"contaminant='{pollu}'")
-print(unitat)
+
 # Obtaining coordinates from the climate stations
 coords=np.zeros([len(estacions),2])
 for i in range(len(estacions)):
@@ -76,6 +91,7 @@ for i in range(len(estacions)):
             FiltNO2 = pd.concat([FiltNO2, FiltNO22])
 if (FiltNO2[FiltNO2['station'] == estacions[0]]['value'] == 0).all():
     FiltNO2 = FiltNO2[FiltNO2['station']==estacions[1]]
+# If you are passed january 2025 you need to add a year filter for 2024 to get the same results
 jandata=FiltNO2[FiltNO2.index.to_series().dt.month.isin([1,2])]
 
 # Getting traffic data for months 1,2
@@ -109,7 +125,7 @@ for i in range(len(estacions)):
             if (zero_rows == 0).all()==True:
                 cdf=cdf.drop(int(i))
 
-
+        # Obtaining the selected statistical average
         if Stat==1: # Maximum
             cdf_0=cdf.resample(T, on='data')['estatActual'].max()
         if Stat==2: # Minimum
@@ -136,7 +152,7 @@ for i in range(len(estacions)):
             if (zero_rows == 0).all()==True:
                 cdf=cdf.drop(int(i))
 
-
+# 
         if Stat==1: # Maximum
             cdf_0=cdf.resample(T, on='data')['estatActual'].max()
         if Stat==2: # Minimum
@@ -152,13 +168,14 @@ for i in range(len(estacions)):
         
         # # Same length same index
         jandata_0=jandata.loc[jandata.index.isin(cdf_0.index)]
-
+        # Merge the different stations
         merged_df_0 = jandata_0.join(cdf_0, how='inner')
         merged_df = pd.concat([merged_df,merged_df_0])
-
+ 
 merged_df=merged_df.reset_index()
 merged_df = merged_df[merged_df['value']!=0]
-print(merged_df)
+
+# Change this value to obatin results for the different stations.
 merged_df0 = merged_df[merged_df['station']==estacions[1]]
 
 # Setting limits and max
@@ -171,7 +188,7 @@ coefficients = np.polyfit(merged_df0['estatActual'], merged_df0['value'], 1)
 x=np.linspace(0,5,6)
 
 trend = coefficients[0] * x + coefficients[1]
-print(trend)
+
 # Plot the results
 plt.figure(figsize=(10,6))
 sns.violinplot(x='estatActual', y='value', data=merged_df0)
@@ -179,9 +196,12 @@ plt.title(f'{pollu} level vs traffic density for hour during two months in {esta
 plt.ylim(bottom=0)
 plt.xlabel('Traffic density',fontsize=14)
 plt.ylabel(f'{pollu} level ({unitat[0]})',fontsize=14)
+
+#Trend line
 ymin, ymax = plt.ylim()
 plt.plot(x,trend,linestyle='--',color='black',label='Trendline')
 
+# This plots the colors bands showing the limits of the Pollution values
 plt.axhspan(0, Minimum[pollu], color='green', alpha=0.3, label='WHO limits')
 plt.axhspan(Minimum[pollu], Medium[pollu], color='yellowgreen', alpha=0.3, label='Legal future')
 plt.axhspan(Medium[pollu], Max[pollu], color='yellow', alpha=0.3, label='Legal now')
