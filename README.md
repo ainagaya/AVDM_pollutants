@@ -20,6 +20,10 @@ In this work, we examine various data sets, including vehicle age statistics, tr
 - plotly_heatmap: code to generate plotly heatmaps
 - traffic: code to generate figures related with traffic and air pollutants
 
+## Documentation
+
+We provide auto-generated documentation in `docs` for the module `data_fetcher`. It is built using Sphinx.
+
 ## Acces to the dataset
 
 To acces the dataset we use an API and connect with a token provided by the data portal.
