@@ -3,6 +3,12 @@ import matplotlib.pyplot as plt
 from data_fetcher.data_fetcher import DataFetcher
 import pandas as pd
 
+"""
+Contains functions to plot timeseries data
+To be used as examples
+"""
+
+
 def plot_timeseries(data, title, ylabel, xlabel='Date', figsize=(10, 6)):
     fig, ax = plt.subplots(figsize=figsize)
     data.plot(ax=ax)

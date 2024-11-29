@@ -10,14 +10,40 @@ import matplotlib.pyplot as plt
 
 
 def load_yaml(file_path):
+    """
+    Load a YAML file and return its contents.
+    Args:
+        file_path (str): Path to the YAML file.
+    Returns:
+        dict: Contents of the YAML file.
+    """
     yaml = YAML(typ='safe')
     with open(file_path, 'r') as file:
         return yaml.load(file)
     
 def initialize_accumulator(stations, pollutants):
+    """
+    Initialize an accumulator DataFrame with zeros.
+    Args:
+        stations (list): List of station names.
+        pollutants (list): List of pollutant names.
+    Returns:
+        pd.DataFrame: DataFrame initialized with zeros.
+    """
     return pd.DataFrame(0, index=stations, columns=pollutants)
 
 def update_accumulator(accumulator, processed_data, stations, pollutants, thresholds):
+    """
+    Update the accumulator DataFrame with counts of threshold exceedances.
+    Args:
+        accumulator (pd.DataFrame): DataFrame to be updated.
+        processed_data (pd.DataFrame): DataFrame containing processed data.
+        stations (list): List of station names.
+        pollutants (list): List of pollutant names.
+        thresholds (dict): Dictionary of thresholds for each pollutant.
+    Returns:
+        pd.DataFrame: Updated accumulator DataFrame.
+    """
     for station in stations:
         for contaminant in pollutants:
             station_data = processed_data[(processed_data['nom_estacio'] == station) & (processed_data['contaminant'] == contaminant)]
@@ -31,16 +57,35 @@ def update_accumulator(accumulator, processed_data, stations, pollutants, thresh
     return accumulator
 
 def plot_heatmap(accumulator, title):
+    """
+    Plot a heatmap of the accumulator DataFrame.
+    Args:
+        accumulator (pd.DataFrame): DataFrame to be plotted.
+        title (str): Title of the heatmap.
+    """
     fig = px.imshow(accumulator, color_continuous_scale='RdBu_r')
     fig.update_layout(title=title)
     fig.show()
 
 def plot_heatmap_logscaled(accumulator, title):
+    """
+    Plot a log-scaled heatmap of the accumulator DataFrame.
+    Args:
+        accumulator (pd.DataFrame): DataFrame to be plotted.
+        title (str): Title of the heatmap.
+    """
     fig = px.imshow(accumulator.applymap(lambda x: 0 if x == 0 else ('NaN' if x == 'NaN' else math.log(x))), color_continuous_scale='RdBu_r')
     fig.update_layout(title=f'{title} in logscale')
     fig.show()
 
 def plot_stations_in_map(station_coordinates):
+    """
+    Plot the locations of stations on a map.
+    Args:
+        station_coordinates (pd.DataFrame): DataFrame containing station coordinates with columns 'longitud' and 'latitud'.
+    Raises:
+        ValueError: If station_coordinates is None.
+    """
     # Create a GeoDataFrame from the data
     if station_coordinates is not None:
         stations_df = gpd.GeoDataFrame(
@@ -71,6 +116,14 @@ def plot_stations_in_map(station_coordinates):
     plt.show()
 
 def plot_bubble_map(dataframe, station_coordinates, title, contaminant='NO2'):
+    """
+    Plot a bubble map showing the exceedances of a specific contaminant.
+    Args:
+        dataframe (pd.DataFrame): DataFrame containing exceedance data.
+        station_coordinates (pd.DataFrame): DataFrame containing station coordinates with columns 'longitud' and 'latitud'.
+        title (str): Title of the bubble map.
+        contaminant (str): Name of the contaminant to plot. Default is 'NO2'.
+    """
     
     # Merge the dataframes on 'nom_estacio'
     print("dataframe: ", dataframe)
