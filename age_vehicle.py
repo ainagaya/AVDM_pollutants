@@ -2,7 +2,7 @@ from data_fetcher.data_fetcher import DataFetcher
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from data_fetcher.graphics import plot_timeseries, accumulate_data # type: ignore
+from data_fetcher.graphics import accumulate_data 
 import seaborn as sns
 
 # original columns of the dataset:
@@ -28,6 +28,7 @@ import seaborn as sns
 
 # # which contaminants are detected by each station?
 # # we get all avalible stations
+# fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=3000)
 # available_stations = fetcher.list_available_options_with_filter("nom_estacio", "municipi='Barcelona'")
 # for station in available_stations:
 #     available_contaminant = fetcher.list_available_options_with_filter("contaminant", "nom_estacio='%s'"%station)
