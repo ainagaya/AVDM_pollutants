@@ -195,14 +195,14 @@ mod_year_age['Norm_value'] = value_norm
 
 def plot_fig2(df,pollutant='NO2'):
     """Function that plots a figure using a df and depending of the pollutant"""
-    fig2 = sns.lmplot(data=df, x='Norm_value', y=pollutant, hue='Year', col='Vehicle')
+    fig2 = sns.lmplot(data=df, x='Norm_value', y=pollutant, hue='Year', col='Vehicle', palette="flare")
     fig2.tight_layout(pad=2) 
     j = 0
     for ax in fig2.axes.flat:
         # we draw the line between initial and final points
         ini_coor = (df.loc[(j*5),'Norm_value'], df.loc[(j*5),pollutant])
         final_coor = (df.loc[(j*5+4),'Norm_value'], df.loc[(j*5+4),pollutant])
-        ax.axline(ini_coor,final_coor, color='k', ls='-')
+        ax.axline(ini_coor,final_coor, color='k', ls='--')
         ax.grid(True, axis='both', ls=':')
         ax.set(xlabel='Normalized number of vehicles', ylabel='Normalized NO2 value')
         j+=1
