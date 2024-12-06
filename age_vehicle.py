@@ -17,7 +17,7 @@ import seaborn as sns
 #codi_ine
 #municip
 #codi_comarca
-#nom comarca
+#nom comarca 
 #h01
 #...
 #h24
@@ -64,6 +64,54 @@ def num_vehi_by_age(file_name,type_car = 'Turismes'):
     df_result = pd.DataFrame([num_cars_list], columns=antique_list)
     return df_result
 
+# Barcelona (Eixample) ['NO2' 'NO' 'O3' 'PM2.5' 'PM10' 'CO' 'SO2'] 7
+# Barcelona (Ciutadella) ['NO2' 'O3' 'NO' 'NOX'] 4
+# Barcelona (Observatori Fabra) ['PM10' 'NOX' 'NO2' 'O3' 'NO'] 5
+# Barcelona (Parc Vall Hebron) ['NO' 'CO' 'NOX' 'O3' 'PM10' 'NO2' 'SO2' 'PM2.5'] 8
+# Barcelona (Palau Reial) ['SO2' 'NO2' 'O3' 'NOX' 'NO' 'PM10' 'CO' 'PM2.5'] 8
+# Barcelona (Poblenou) ['NOX' 'NO2' 'PM10' 'NO'] 4
+# Barcelona (Gràcia - Sant Gervasi) ['NO' 'O3' 'NO2' 'SO2' 'NOX' 'PM10' 'CO'] 7
+# Barcelona (Sants) ['NO' 'NO2' 'NOX'] 3
+
+# extract data and filter by date for the first time
+# fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=200000)
+# processed_data = fetcher.fetch_with_filter_and_data_and_process('2019-01-01T01:00:00.000',"municipi='Barcelona'")
+
+# once data is extracted, use the .csv because is faster
+processed_data = pd.read_csv('filtered_data_from.csv')
+# return type of column data to datatime
+processed_data['data'] = pd.to_datetime(processed_data['data'])
+# print(processed_data['data'].min()) #2019-01-02 
+
+# plot the corresponing car pollutants from interval 2019-2023 for a respective station
+car_pollu = ['NO2','CO']
+# Figure 1
+fig, ax = plt.subplots()
+for p in car_pollu:
+    resampled = accumulate_data(processed_data,'Barcelona (Palau Reial)', p, 'A')
+    resampled.plot(ax=ax)
+ax.set_title('Detected car pollutants in Barcelona (Palau Reial) for interval 2019-2023')
+ax.set_xlabel('Date')
+ax.set_ylabel('Pollutants (ug/m^3)')
+ax.ticklabel_format(axis='y',style='sci',scilimits = (0,0))
+ax.legend(car_pollu)
+
+def values_pollutant(data,station='Barcelona (Palau Reial)',pollutant='NO2',time='A'):
+    """Function that extracts the values of a pollutant from the interval 2019-2023"""
+    resampled = accumulate_data(data,station,pollutant, time)
+    resampled = resampled.drop(index='2024-12-31')
+    # i hate datatime index
+    values_poll = [] #2019,2020,2021,2022,2023
+    for i in range(resampled.shape[0]):
+        values_poll.append(resampled.iat[i,0])
+    # print(pollutant, np.max(values_poll))
+    values_poll_norm = values_poll/np.max(values_poll)
+    return values_poll,values_poll_norm
+    
+# we get the values of the pollutant for the interval 2019-2023
+values_no2, values_no2_norm = values_pollutant(processed_data)
+values_co, values_co_norm = values_pollutant(processed_data,pollutant='CO')
+
 def num_vehi_by_age_T(file_name,type_car = 'Turismes'):
     """Function that extract the number of type_car by age in Barcelona and applies T. Also generates new columns"""
     antiguetat2020 = pd.read_csv(file_name)
@@ -91,53 +139,6 @@ def num_vehi_by_age_T(file_name,type_car = 'Turismes'):
     df_result = pd.DataFrame([[type_car]*n_col,[antiguetat2020v3.iloc[1,0]]*n_col,antique_list,num_cars_list,norm_num_cars_list], columns=range(n_col), index=['Vehicle','Year','Antiquity','Value','Perc_value_year'])
     return df_result.T
 
-# Barcelona (Eixample) ['NO2' 'NO' 'O3' 'PM2.5' 'PM10' 'CO' 'SO2'] 7
-# Barcelona (Ciutadella) ['NO2' 'O3' 'NO' 'NOX'] 4
-# Barcelona (Observatori Fabra) ['PM10' 'NOX' 'NO2' 'O3' 'NO'] 5
-# Barcelona (Parc Vall Hebron) ['NO' 'CO' 'NOX' 'O3' 'PM10' 'NO2' 'SO2' 'PM2.5'] 8
-# Barcelona (Palau Reial) ['SO2' 'NO2' 'O3' 'NOX' 'NO' 'PM10' 'CO' 'PM2.5'] 8
-# Barcelona (Poblenou) ['NOX' 'NO2' 'PM10' 'NO'] 4
-# Barcelona (Gràcia - Sant Gervasi) ['NO' 'O3' 'NO2' 'SO2' 'NOX' 'PM10' 'CO'] 7
-# Barcelona (Sants) ['NO' 'NO2' 'NOX'] 3
-
-# extract data and filter by date for the first time
-# fetcher = DataFetcher("analisi.transparenciacatalunya.cat", "9Hbf461pXC6Lin1yqkq414Fxi", "tasf-thgu",limit=200000)
-# processed_data = fetcher.fetch_with_filter_and_data_and_process('2019-01-01T01:00:00.000',"municipi='Barcelona'")
-
-# once data is extracted, use the .csv because is faster
-processed_data = pd.read_csv('filtered_data_from.csv')
-# return type of column data to datatime
-processed_data['data'] = pd.to_datetime(processed_data['data'])
-# print(processed_data['data'].min()) #2019-01-02 
-
-# plot the corresponing car pollutants from interval 2019-2023 for a respective station
-car_pollu = ['NO2','CO','PM2.5']
-# Figure 1
-fig, ax = plt.subplots()
-for p in car_pollu:
-    resampled = accumulate_data(processed_data,'Barcelona (Palau Reial)', p, 'A')
-    resampled.plot(ax=ax)
-ax.set_title('Detected car pollutants in Barcelona (Palau Reial) for interval 2019-2023')
-ax.set_xlabel('Date')
-ax.set_ylabel('Pollutants (ug/m^3)')
-ax.ticklabel_format(axis='y',style='sci',scilimits = (0,0))
-ax.legend(car_pollu)
-
-def values_pollutant(data,station='Barcelona (Palau Reial)',pollutant='NO2',time='A'):
-    """Function that extracts the values of a pollutant from the interval 2019-2023"""
-    resampled = accumulate_data(data,station,pollutant, time)
-    resampled = resampled.drop(index='2024-12-31')
-    # i hate datatime index
-    values_poll = [] #2019,2020,2021,2022,2023
-    for i in range(resampled.shape[0]):
-        values_poll.append(resampled.iat[i,0])
-    values_poll_norm = values_poll/np.max(values_poll)
-    return values_poll,values_poll_norm
-    
-# we get the values of the pollutant for the interval 2019-2023
-values_no2, values_no2_norm = values_pollutant(processed_data)
-values_co, values_co_norm = values_pollutant(processed_data,pollutant='CO')
-
 # create the complete dataframe for interval 2019-2023 
 vehicles = ['Turismes', 'Motos', 'Ciclomotors', 'Furgonetes', 'Camions', 'Altres vehicles']
 new_vehicles = ['Touring cars', 'Motorcycles', 'Mopeds', 'Vans', 'Trucks', 'Other vehicles']
@@ -153,8 +154,9 @@ for v in vehicles:
         # name_pollutants.extend(['CO']*mini_df.shape[0])
         # double_mini_df['Value_pollutant'] = val_pollutants
         # double_mini_df['Pollutant'] = name_pollutants
-        mini_df['NO2'] = [values_no2_norm[int(mini_df.loc[0,'Year'])-2019]]*mini_df.shape[0]
+        mini_df['nNO2'] = [values_no2_norm[int(mini_df.loc[0,'Year'])-2019]]*mini_df.shape[0]
         mini_df['CO'] = [values_co_norm[int(mini_df.loc[0,'Year'])-2019]]*mini_df.shape[0]
+        mini_df['NO2(ugm^-3)'] = [values_no2[int(mini_df.loc[0,'Year'])-2019]]*mini_df.shape[0]
         mini_df = mini_df.replace({'Vehicle': v}, new_vehicles[vehicles.index(v)])
         df_list.append(mini_df)
 year_age = pd.concat(df_list).reset_index()
@@ -191,10 +193,11 @@ value_norm = []
 for v in new_vehicles:
     small_df = mod_year_age[(mod_year_age.Vehicle == v)]
     for i in small_df.index:
+        # print(v, small_df.Value.max())
         value_norm.append(small_df.Value[i]/small_df.Value.max())
 mod_year_age['Norm_value'] = value_norm
 
-def plot_fig2(df,pollutant='NO2'):
+def plot_fig2(df,pollutant='nNO2'):
     """Function that plots a figure using a df and depending of the pollutant"""
     fig2 = sns.lmplot(data=df, x='Norm_value', y=pollutant, hue='Year', col='Vehicle', palette="flare")
     fig2.tight_layout(pad=2) 
@@ -205,16 +208,30 @@ def plot_fig2(df,pollutant='NO2'):
         final_coor = (df.loc[(j*5+4),'Norm_value'], df.loc[(j*5+4),pollutant])
         ax.axline(ini_coor,final_coor, color='k', ls='--')
         ax.grid(True, axis='both', ls=':')
-        ax.set(xlabel='Normalized number of vehicles', ylabel='Normalized NO2 value')
+        ax.set(xlabel='Normalized number of vehicles', ylabel='Normalized NO2 value', xlim = (0.32,1.03), ylim = (0.6,1.03))
         j+=1
 
 mod3_year_age = mod_year_age[(mod_year_age['Vehicle'] != 'Other vehicles')]
+plt.figure('multi')
 plot_fig2(mod3_year_age)
 # plot_fig2(mod3_year_age,pollutant='CO')
+
+def plot_fig3(df,pollutant='NO2(ugm^-3)'):
+    """Function that plots a figure using a df and depending of the pollutant"""
+    sns.scatterplot(data=df, x="Vehicle", y="Value", size=pollutant, legend='brief', sizes=(20,200), hue='Year', palette='flare')
+    plt.ticklabel_format(axis='y',style='sci', scilimits = (0,0))
+    plt.xlabel('Type of vehicle')
+    plt.ylabel('Number of units')
+    plt.grid()
+    plt.tight_layout()
+
+# print(mod_year_age.head(3))
+plt.figure(3)
+plot_fig3(mod_year_age)
 plt.show()
 
 # for pair figures
-#  ['Touring cars', 'Motorcycles', 'Mopeds', 'Vans', 'Trucks', 'Other vehicles']
+# new_vehicles = ['Touring cars', 'Motorcycles', 'Mopeds', 'Vans', 'Trucks', 'Other vehicles']
 # no_car = [[0,1,2,3],[0,1,4,5],[2,3,4,5]]
 # for i in no_car:
 #     mod3a_year_age = mod_year_age[(mod_year_age['Vehicle'] != new_vehicles[i[0]])]
